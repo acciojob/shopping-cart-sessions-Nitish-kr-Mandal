@@ -1,4 +1,3 @@
-// Product data
 const products = [
   { id: 1, name: "Product 1", price: 10 },
   { id: 2, name: "Product 2", price: 20 },
@@ -7,52 +6,27 @@ const products = [
   { id: 5, name: "Product 5", price: 50 },
 ];
 
+// Load cart from sessionStorage or start empty
+let cart = JSON.parse(window.sessionStorage.getItem("cart")) || [];
+
+// Render product list
 const productList = document.getElementById("product-list");
-const cartList = document.getElementById("cart-list");
-const clearCartBtn = document.getElementById("clear-cart-btn");
+products.forEach((product) => {
+  const li = document.createElement("li");
+  li.textContent = `${product.name} - $${product.price} `;
 
+  const btn = document.createElement("button");
+  btn.textContent = "Add to Cart";
+  btn.addEventListener("click", () => addToCart(product));
 
-// ✅ Ensure cart key exists WITHOUT overwriting Cypress data
-function initializeCart() {
-  if (sessionStorage.getItem("cart") === null) {
-    sessionStorage.setItem("cart", JSON.stringify([]));
-  }
-}
+  li.appendChild(btn);
+  productList.appendChild(li);
+});
 
-// Always read fresh data from sessionStorage
-function getCart() {
-  return JSON.parse(sessionStorage.getItem("cart")) || [];
-}
-
-function saveCart(cart) {
-  sessionStorage.setItem("cart", JSON.stringify(cart));
-}
-
-// Render products
-function renderProducts() {
-  productList.innerHTML = "";
-
-  products.forEach((product) => {
-    const li = document.createElement("li");
-    const button = document.createElement("button");
-
-    button.textContent = "Add to Cart";
-
-    button.addEventListener("click", function () {
-      addToCart(product.id);
-    });
-
-    li.textContent = `${product.name} - $${product.price} `;
-    li.appendChild(button);
-    productList.appendChild(li);
-  });
-}
-
-// Render cart
+// Render cart from current cart array
 function renderCart() {
-  const cart = getCart();
+  const cartList = document.getElementById("cart-list");
   cartList.innerHTML = "";
-
   cart.forEach((item) => {
     const li = document.createElement("li");
     li.textContent = `${item.name} - $${item.price}`;
@@ -60,36 +34,19 @@ function renderCart() {
   });
 }
 
-// Add item
-function addToCart(productId) {
-  const cart = getCart(); // always fresh read
-
-  const product = products.find((p) => p.id === productId);
-
-  if (product) {
-    cart.push({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-    });
-
-    saveCart(cart);
-    renderCart();
-  }
-}
-
-// Clear cart
-function clearCart() {
-  sessionStorage.setItem("cart", JSON.stringify([]));
+// Add product to cart and save to sessionStorage
+function addToCart(product) {
+  cart.push({ id: product.id, name: product.name, price: product.price });
+  window.sessionStorage.setItem("cart", JSON.stringify(cart));
   renderCart();
 }
 
-clearCartBtn.addEventListener("click", clearCart);
-
-
-// ✅ Important: use DOMContentLoaded for Cypress compatibility
-document.addEventListener("DOMContentLoaded", function () {
-  initializeCart();
-  renderProducts();
+// Clear cart button
+document.getElementById("clear-cart-btn").addEventListener("click", () => {
+  cart = [];
+  window.sessionStorage.setItem("cart", JSON.stringify(cart));
   renderCart();
 });
+
+// Initial render from sessionStorage
+renderCart();
