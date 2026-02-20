@@ -11,25 +11,34 @@ const productList = document.getElementById("product-list");
 const cartList = document.getElementById("cart-list");
 const clearCartBtn = document.getElementById("clear-cart-btn");
 
-function getCartFromSession() {
-  const cart = sessionStorage.getItem("cart");
-  return cart ? JSON.parse(cart) : [];
+
+// ✅ Ensure cart key exists WITHOUT overwriting Cypress data
+function initializeCart() {
+  if (sessionStorage.getItem("cart") === null) {
+    sessionStorage.setItem("cart", JSON.stringify([]));
+  }
 }
 
-function saveCartToSession(cart) {
+// Always read fresh data from sessionStorage
+function getCart() {
+  return JSON.parse(sessionStorage.getItem("cart")) || [];
+}
+
+function saveCart(cart) {
   sessionStorage.setItem("cart", JSON.stringify(cart));
 }
 
+// Render products
 function renderProducts() {
   productList.innerHTML = "";
 
   products.forEach((product) => {
     const li = document.createElement("li");
-
     const button = document.createElement("button");
+
     button.textContent = "Add to Cart";
 
-    button.addEventListener("click", () => {
+    button.addEventListener("click", function () {
       addToCart(product.id);
     });
 
@@ -39,8 +48,9 @@ function renderProducts() {
   });
 }
 
+// Render cart
 function renderCart() {
-  const cart = getCartFromSession();
+  const cart = getCart();
   cartList.innerHTML = "";
 
   cart.forEach((item) => {
@@ -50,8 +60,9 @@ function renderCart() {
   });
 }
 
+// Add item
 function addToCart(productId) {
-  let cart = getCartFromSession();
+  const cart = getCart(); // always fresh read
 
   const product = products.find((p) => p.id === productId);
 
@@ -62,11 +73,12 @@ function addToCart(productId) {
       price: product.price,
     });
 
-    saveCartToSession(cart);
+    saveCart(cart);
     renderCart();
   }
 }
 
+// Clear cart
 function clearCart() {
   sessionStorage.setItem("cart", JSON.stringify([]));
   renderCart();
@@ -74,5 +86,10 @@ function clearCart() {
 
 clearCartBtn.addEventListener("click", clearCart);
 
-renderProducts();
-renderCart();
+
+// ✅ Important: use DOMContentLoaded for Cypress compatibility
+document.addEventListener("DOMContentLoaded", function () {
+  initializeCart();
+  renderProducts();
+  renderCart();
+});
